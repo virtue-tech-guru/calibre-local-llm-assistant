@@ -6,9 +6,9 @@ from fastapi.requests import Request
 import markdown
 import os
 from prompts.feynman_filter import FEYNMAN_FILTER
-from src.models.assistant_config import AssistantConfig
-from src.models.user_query import UserQuery
-from src.models.assistant_response import AssistantResponse
+from src.data.models.assistant_config import AssistantConfig
+from src.data.models.user_query import UserQuery
+from src.data.models.assistant_response import AssistantResponse
 
 app = FastAPI()
 
@@ -17,10 +17,6 @@ assistant_config = AssistantConfig(model="llama3.2:1b",prompt=FEYNMAN_FILTER)
 assistant_response = AssistantResponse()
 user_query = UserQuery()
 llm_client = Client()
-
-@app.get("/")
-async def root():
-    return FileResponse(os.path.join("static", "index.html"))
 
 
 @app.get("/models")
