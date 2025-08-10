@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Calibre Plugin: LLM Supported Content Helper</title>
+  <style>
+    body {
+      background: #0f1724;
+      color: #e6eef8;
+      font-family: sans-serif;
+      padding: 20px;
+      margin: 0;
+      max-width: 900px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    textarea {
+      width: 100%;
+      height: 280px;
+      background: #1b2538;
+      border: none;
+      border-radius: 8px;
+      padding: 15px;
+      font-size: 16px;
+      color: #e6eef8;
+      resize: vertical;
+      box-sizing: border-box;
+      margin-bottom: 12px;
+    }
+    select {
+      background: #1b2538;
+      color: #e6eef8;
+      border: none;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 16px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      width: 100%;
+      max-width: 320px;
+    }
+    button {
+      background: #4f46e5;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-right: 8px;
+    }
+    button.secondary {
+      background: transparent;
+      border: 1px solid #9fb0c8;
+      color: #9fb0c8;
+    }
+    #responseBox {
+      margin-top: 20px;
+      padding: 12px;
+      background: #021026;
+      border-radius: 8px;
+      white-space: pre-wrap;
+      font-family: monospace;
+      min-height: 100px;
+      color: #a5b8ff;
+      border: 1px solid #3b429a;
+    }
+    label {
+      font-weight: 600;
+      margin-bottom: 6px;
+      display: block;
+      color: #9fb0c8;
+    }
+  </style>
+</head>
+<body>
+  <h1>Make your books LLM assisted</h1>
+
+  <label for="modelSelect">Select LLM Model:</label>
+  <select id="modelSelect" aria-label="Select language model">
+    <option value="">Loading models...</option>
+  </select>
+
+  <textarea id="prompt" placeholder="Write your prompt here..."></textarea>
+  <br/>
+  <button id="applyBtn">Apply Model</button>
+  <button id="clearBtn" class="secondary">Clear</button>
+
+  <div id="responseBox">(Response will appear here)</div>
+
+  <script>
+    const promptEl = document.getElementById('prompt');
+    const applyBtn = document.getElementById('applyBtn');
+    const clearBtn = document.getElementById('clearBtn');
+    const responseBox = document.getElementById('responseBox');
+    const modelSelect = document.getElementById('modelSelect');
+
+    async function loadModels() {
+      try {
+        const res = await fetch('/models');
+        if (!res.ok) throw new Error('Failed to load models');
+        const data = await res.json();
+        console.log("Models Data: "+data.models)
+        modelSelect.innerHTML = ''; // clear existing
+        data.models.forEach(model => {
+          const option = document.createElement('option');
+          option.value = model.value;
+          option.textContent = model;
+          if (model.disabled) option.disabled = true;
+          if (model.selected) option.selected = true;
+          modelSelect.appendChild(option);
+        });
+      } catch (e) {
+        modelSelect.innerHTML = '<option value="">Error loading models</option>';
+      }
+    }
+
+    applyBtn.addEventListener('click', async () => {
+      const promptText = promptEl.value.trim();
+      const selectedModel = modelSelect.value;
+      if (!promptText) {
+        responseBox.textContent = "Please enter a meta prompt to read your books efficiently.";
+        return;
+      }
+      try {
+        const res = await fetch('/prompt', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ prompt: promptText, model: selectedModel })
+        });
+        if (!res.ok) throw new Error('Server error');
+        const data = await res.json();
+        console.log(data.result)
+    } catch (err) {
+        console.error('Error: ' + err.message);
+      }
+    });
+
+    async function fetchResponse() {
+      try {
+        const res = await fetch('/response');
+        if (!res.ok) throw new Error('Network error');
+        const data = await res.json();
+        responseBox.innerHTML = data.response;
+      } catch (e) {
+        responseBox.textContent = 'Failed to load response.';
+      }
+    }
+
+    setInterval(fetchResponse, 1000);
+
+    clearBtn.addEventListener('click', () => {
+      promptEl.value = '';
+      responseBox.textContent = '(Response will appear here)';
+      promptEl.focus();
+    });
+
+    loadModels();
+
+  </script>
+</body>
+</html>
