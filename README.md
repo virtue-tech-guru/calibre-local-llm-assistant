@@ -24,7 +24,7 @@ Tests:
 - Tested with llama3.2:1b
 
 Planned Features:
-- Extract unstructured data from epubs mobi or books to structured for making this app enabled for data engineers. 
+- Extract unstructured data from epubs mobi or books convey to structured for making this app allowed to use by data engineers. 
 
 
 
